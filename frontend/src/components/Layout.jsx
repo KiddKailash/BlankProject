@@ -45,6 +45,7 @@ const Layout = () => {
   const doNotDisplaySidebar =
     location.pathname === "/login" ||
     location.pathname === "/register" ||
+    location.pathname === "/auth" ||
     location.pathname === "/" ||
     location.pathname === "*";
 
@@ -54,8 +55,8 @@ const Layout = () => {
         display: "flex",
         height: "100vh", // fill viewport height
         width: "100%", // fill viewport width
-        bgcolor: "background.default",
-        p: 1,
+        bgcolor: "background.paper",
+        p: doNotDisplaySidebar ? 0 : 1,
       }}
     >
       {/* PRIMARY SIDEBAR */}
@@ -79,19 +80,8 @@ const Layout = () => {
           flexGrow: 1, // let this box expand to fill leftover space
         }}
       >
-        {/* MAIN CONTENT AREA */}
-        <Container
-          sx={{
-            flexGrow: 1, // again, fill remaining horizontal space
-            overflowY: "auto", // scroll if content is too tall
-            display: "flex", // we use a flex container to position the <Container>
-            width: "100%",
-            height: "100%",
-          }}
-        >
-          {/* Renders whatever route/page is active */}
-          <Outlet />
-        </Container>
+        {/* Renders the route/page that is active */}
+        <Outlet />
       </Box>
     </Box>
   );
