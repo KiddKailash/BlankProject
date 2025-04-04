@@ -18,9 +18,27 @@ import App from "./App";
 import { SnackbarProvider } from "./contexts/SnackbarContext";
 import { UserProvider } from "./services/UserContext";
 
+// OAuth Providers
+import { GoogleOAuthProvider } from "@react-oauth/google";
+import { PublicClientApplication } from "@azure/msal-browser";
+import { MsalProvider } from "@azure/msal-react";
+
 // MUI Theme Provider, CSS Baseline and a component which switches the theme
 import { ThemeProvider, CssBaseline } from "@mui/material";
 import { getTheme } from "./styles/global";
+
+// 1) MSAL config – load from your Vite env variables
+const msalConfig = {
+  auth: {
+    clientId: import.meta.env.VITE_MICROSOFT_CLIENT_ID,
+    authority: `https://login.microsoftonline.com/${
+      import.meta.env.VITE_MICROSOFT_TENANT_ID
+    }`,
+    redirectUri: window.location.origin,
+  },
+};
+
+const pca = new PublicClientApplication(msalConfig);
 
 /**
  * Root component that sets up the global theme and routing for the application.
@@ -37,14 +55,18 @@ export const Root = () => {
 
   return (
     <Router>
-      <UserProvider>
-        <ThemeProvider theme={theme}>
-          <CssBaseline />
-          <SnackbarProvider>
-            <App />
-          </SnackbarProvider>
-        </ThemeProvider>
-      </UserProvider>
+      <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+        <MsalProvider instance={pca}>
+          <UserProvider>
+            <ThemeProvider theme={theme}>
+              <CssBaseline />
+              <SnackbarProvider>
+                <App />
+              </SnackbarProvider>
+            </ThemeProvider>
+          </UserProvider>
+        </MsalProvider>
+      </GoogleOAuthProvider>
     </Router>
   );
 };
