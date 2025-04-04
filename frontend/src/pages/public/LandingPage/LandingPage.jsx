@@ -5,6 +5,9 @@ import { useNavigate } from "react-router-dom";
 import TypewriterEffect from "./TypewriterEffect";
 import AnimatedGradientBackground from "./AnimatedBackground";
 
+// Images
+import Logo from "/images/logo.png";
+
 // MUI
 import { Box, Button, Container, Typography, Stack } from "@mui/material";
 
@@ -23,11 +26,15 @@ const LandingPage = () => {
             direction="row"
             justifyContent="space-between"
             alignItems="center"
+            verticalAlign="middle"
           >
             {/* Left Side */}
-            <Typography variant="h6" fontWeight="bold" color="primary">
-              Vellum
-            </Typography>
+            <Box display="flex" alignItems="center" gap={1}>
+              <img src={Logo} alt="Logo" style={{ height: 24 }} />
+              <Typography variant="h6" fontWeight="bold" color="primary">
+                Vellum
+              </Typography>
+            </Box>
 
             {/* Right Side */}
             <Stack direction="row" spacing={2}>
@@ -41,7 +48,7 @@ const LandingPage = () => {
           </Stack>
         </Box>
 
-        <Box sx={{my: 24}}>
+        <Box sx={{ my: 24 }}>
           {/* Typewriter + Hero Text */}
           <Box textAlign="center" my={4}>
             <TypewriterEffect />
