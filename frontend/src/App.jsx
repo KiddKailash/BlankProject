@@ -10,9 +10,10 @@ import React, { useState, useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
 
 // Webpages - Public
-import Login from "./pages/public/Login";
 import PageNotFound from "./pages/public/PageNotFound";
-import Register from "./pages/public/Register";
+import LandingPage from "./pages/public/LandingPage/LandingPage";
+import AuthPage from "./pages/public/AuthPage";
+
 // Webpages - Private
 import Account from "./pages/private/Account";
 import Activity from "./pages/private/Activity";
@@ -41,9 +42,8 @@ function App() {
   // The "*" path acts as a catch-all route for undefined URLs.
   const pages = [
     { path: "*", component: <PageNotFound /> },
-    { path: "/", component: <Login /> },
-    { path: "/login", component: <Login /> },
-    { path: "/register", component: <Register /> },
+    { path: "/", component: <LandingPage /> },
+    { path: "/auth", component: <AuthPage /> },
     { path: "/dashboard", component: <Dashboard /> },
     { path: "/account", component: <Account /> },
     { path: "/activity", component: <Activity /> },
@@ -55,13 +55,11 @@ function App() {
     { path: "/storage", component: <Storage /> },
     { path: "/students", component: <Students /> },
     { path: "/settings", component: <Settings /> },
-
-    // Add additional page objects here as needed.
   ];
 
   // Define an array of paths that are public.
   // Any path not included in this list (and not the catch-all "*") will be considered protected.
-  const publicPaths = ["/", "/login", "/register"];
+  const publicPaths = ["/", "/auth"];
 
   // Local state to store fetched data from the backend (if needed).
   const [data, setData] = useState(null);
