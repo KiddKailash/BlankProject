@@ -35,7 +35,7 @@ const ProtectRoute = ({ children }) => {
   }
 
   if (!isLoggedIn) {
-    return <Navigate to="/login?mode=login" replace />;
+    return <Navigate to="/auth?mode=login" replace />;
   }
 
   return children;
