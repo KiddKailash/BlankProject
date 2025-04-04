@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 
-const words = ["Vellum", "Write SOAs", "Work Smarter"];
+const words = ["Write SOAs", "Work Smarter", "Vellum" ];
 
 const TypewriterEffect = () => {
   const [displayedText, setDisplayedText] = useState("");
@@ -27,7 +27,7 @@ const TypewriterEffect = () => {
 
       // Finished typing the word
       if (!isDeleting && charIndex === currentWord.length) {
-        setTimeout(() => setIsDeleting(true), 1500);
+        setTimeout(() => setIsDeleting(true), 2700);
       }
 
       // Finished deleting the word
