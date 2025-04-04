@@ -9,6 +9,7 @@ import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import Box from "@mui/material/Box";
 import Link from "@mui/material/Link";
+import Divider from "@mui/material/Divider";
 
 // Context
 import { SnackbarContext } from "../../contexts/SnackbarContext";
@@ -86,7 +87,7 @@ const AuthPage = () => {
   };
 
   return (
-    <Container maxWidth="sm" sx={{ p: 12 }}>
+    <Container maxWidth="xs" sx={{ p: 12 }}>
       <Box
         component="form"
         noValidate
@@ -96,7 +97,6 @@ const AuthPage = () => {
           marginTop: theme.spacing(4),
           bgcolor: theme.palette.background.paper,
           borderRadius: theme.shape.border,
-          border: `1px solid ${theme.palette.primary.dark}`,
         })}
       >
         <Stack direction="column" spacing={1.5}>
@@ -108,14 +108,22 @@ const AuthPage = () => {
             {isLogin ? (
               <>
                 Don't have an account?{" "}
-                <Link color="primary" onClick={toggleModeUrl} sx={{ cursor: "pointer" }}>
+                <Link
+                  color="primary"
+                  onClick={toggleModeUrl}
+                  sx={{ cursor: "pointer" }}
+                >
                   Sign Up
                 </Link>
               </>
             ) : (
               <>
                 Already have an account?{" "}
-                <Link color="primary" onClick={toggleModeUrl} sx={{ cursor: "pointer" }}>
+                <Link
+                  color="primary"
+                  onClick={toggleModeUrl}
+                  sx={{ cursor: "pointer" }}
+                >
                   Login
                 </Link>
               </>
@@ -132,6 +140,12 @@ const AuthPage = () => {
               variant="outlined"
             />
           )}
+
+          <Stack direction="row" alignItems="center" spacing={2}>
+            <Divider sx={{ flex: 1, borderColor: 'grey.300' }} />
+            <Typography variant="subtitle2">or</Typography> 
+            <Divider sx={{ flex: 1, borderColor: 'grey.300' }} />
+          </Stack>
 
           <TextField
             fullWidth
