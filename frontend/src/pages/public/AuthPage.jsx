@@ -101,7 +101,7 @@ const AuthPage = () => {
       >
         <Stack direction="column" spacing={1.5}>
           <Typography variant="h4" align="center" gutterBottom>
-            {isLogin ? "Teacher Login Portal" : "Register Teacher"}
+            {isLogin ? "Welcome back!" : "Register an Account"}
           </Typography>
 
           <Typography variant="subtitle1" align="center" color="text.secondary">

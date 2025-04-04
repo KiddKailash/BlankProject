@@ -6,8 +6,8 @@
  * @module App
  */
 
-import React, { useState, useEffect } from "react";
-import { Routes, Route } from "react-router-dom";
+import React, { useState } from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
 
 // Webpages - Public
 import PageNotFound from "./pages/public/PageNotFound";
@@ -41,7 +41,8 @@ function App() {
   // Define an array of page objects, each with a route path and the component to render.
   // The "*" path acts as a catch-all route for undefined URLs.
   const pages = [
-    { path: "*", component: <PageNotFound /> },
+    { path: "/404", component: <PageNotFound /> },
+    { path: "*", component: <Navigate to="/404" /> },
     { path: "/", component: <LandingPage /> },
     { path: "/auth", component: <AuthPage /> },
     { path: "/dashboard", component: <Dashboard /> },
@@ -63,18 +64,6 @@ function App() {
 
   // Local state to store fetched data from the backend (if needed).
   const [data, setData] = useState(null);
-
-  useEffect(() => {
-    // Fetch data from the backend API when the component mounts.
-    fetch("http://127.0.0.1:8000/api/")
-      .then((response) => response.json())
-      .then((data) => {
-        // Log and store the fetched data.
-        console.log("Data fetched:", data);
-        setData(data);
-      })
-      .catch((error) => console.error("Error fetching data:", error));
-  }, []); // Empty dependency array ensures this runs once on mount.
 
   // Log the current state of data. This is optional and for debugging purposes.
   data ? console.log("Fetched Data:", data) : console.log("Data not fetched");

@@ -28,21 +28,24 @@ const PageNotFound = () => {
   const navigate = useNavigate();
 
   return (
-    <Container maxWidth="xs" sx={{ textAlign: "center", p:2, borderRadius: 4, mt: "30vh"}}>
+    <Container
+      maxWidth="xs"
+      sx={{ textAlign: "center", p: 2, borderRadius: 4, mt: "35vh" }}
+    >
       <Stack direction="column">
-      <Typography variant="caption" color="error">
-        ERROR 404
-      </Typography>
-      <Typography variant="h5" gutterBottom>
-        Page Not Found
-      </Typography>
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={() => navigate("/")}
-      >
-        Back to Login
-      </Button>
+        <Typography variant="caption" color="error">
+          Error 404
+        </Typography>
+        <Typography variant="h5" gutterBottom>
+          Page Not Found
+        </Typography>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => navigate("/dashboard")}
+        >
+          Back to Dashboard
+        </Button>
       </Stack>
     </Container>
   );

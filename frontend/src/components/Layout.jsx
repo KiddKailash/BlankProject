@@ -17,7 +17,6 @@ import Sidebar from "./Sidebar";
 
 // MUI Components
 import Box from "@mui/material/Box";
-import Container from "@mui/material/Container";
 
 /**
  * Dashboard component that provides the main layout for the application.
@@ -35,19 +34,16 @@ const Layout = () => {
    * Determines if the sidebar should be hidden based on the current path.
    *
    * The sidebar is not displayed on the following routes:
-   * - /login
-   * - /register
+   * - /auth
    * - /
    * - *
    *
    * @type {boolean}
    */
   const doNotDisplaySidebar =
-    location.pathname === "/login" ||
-    location.pathname === "/register" ||
     location.pathname === "/auth" ||
     location.pathname === "/" ||
-    location.pathname === "*";
+    location.pathname === "/404";
 
   return (
     <Box
@@ -55,7 +51,7 @@ const Layout = () => {
         display: "flex",
         height: "100vh", // fill viewport height
         width: "100%", // fill viewport width
-        bgcolor: "background.paper",
+        bgcolor: "background.default",
         p: doNotDisplaySidebar ? 0 : 1,
       }}
     >
