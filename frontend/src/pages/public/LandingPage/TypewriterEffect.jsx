@@ -49,15 +49,12 @@ const TypewriterEffect = () => {
   }, []);
 
   return (
-    <Box display="flex" justifyContent="center" alignItems="center" sx={{ mb: 2 }}>
+    <Box display="flex" justifyContent="center" alignItems="center">
       <Typography variant="h1" component="span">
         {displayedText}
         <Box
           sx={{
             display: "inline-block",
-            width: "0.5ch",
-            ml: 0.5,
-            height: "1em",
             color: "primary.main",
             visibility: isBlinking ? "visible" : "hidden",
           }}
