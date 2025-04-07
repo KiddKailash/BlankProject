@@ -14,7 +14,7 @@ const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 function createToken(userId) {
   // In production, always use a secure secret from env
   return jwt.sign({ userId }, process.env.JWT_SECRET || "mysecret", {
-    expiresIn: "1h",
+    expiresIn: "1d",
   });
 }
 
