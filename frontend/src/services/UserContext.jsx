@@ -23,6 +23,8 @@ export const UserProvider = ({ children }) => {
   const [authLoading, setAuthLoading] = useState(true);
   const navigate = useNavigate();
 
+  const backendUrl = import.meta.env.VITE_SERVER_URI || "http://localhost:8080";
+
   useEffect(() => {
     const verifyToken = async () => {
       const token = localStorage.getItem("access_token");
@@ -34,7 +36,7 @@ export const UserProvider = ({ children }) => {
 
       try {
         const response = await fetch(
-          "http://localhost:8080/authorisation/verify",
+          `${backendUrl}authorisation/verify`,
           {
             method: "GET",
             headers: {
@@ -62,6 +64,8 @@ export const UserProvider = ({ children }) => {
     };
 
     verifyToken();
+    // Adding backendUrl to the dependency array would cause an infinite loop
+    //eslint-disable-next-line
   }, []);
 
   /************************************************
@@ -84,7 +88,7 @@ export const UserProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const response = await fetch(
-        "http://localhost:8080/authorisation/login",
+        `${backendUrl}authorisation/login`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -104,7 +108,7 @@ export const UserProvider = ({ children }) => {
   const registerUser = async (name, email, password) => {
     try {
       const response = await fetch(
-        "http://localhost:8080/authorisation/register",
+        `${backendUrl}authorisation/register`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -124,7 +128,7 @@ export const UserProvider = ({ children }) => {
   const loginWithGoogle = async (googleToken) => {
     try {
       const response = await fetch(
-        "http://localhost:8080/authorisation/google-auth",
+        `${backendUrl}authorisation/google-auth`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -144,7 +148,7 @@ export const UserProvider = ({ children }) => {
   const loginWithMicrosoft = async (msToken) => {
     try {
       const response = await fetch(
-        "http://localhost:8080/authorisation/microsoft-auth",
+        `${backendUrl}authorisation/microsoft-auth`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
