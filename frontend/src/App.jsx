@@ -12,7 +12,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 // Webpages - Public
 import PageNotFound from "./pages/public/PageNotFound";
 import LandingPage from "./pages/public/LandingPage/LandingPage";
-import AuthPage from "./pages/public/AuthPage";
+import AuthPage from "./pages/public/AuthPage/AuthPage";
 
 // Webpages - Private
 import Account from "./pages/private/Account";
