@@ -35,7 +35,11 @@ const OAuthButton = styled(Button)(({ theme }) => ({
   },
 }));
 
-function AuthButtons({ handleGoogleSuccess, handleGoogleError, handleMicrosoftLogin }) {
+function AuthButtons({
+  handleGoogleSuccess,
+  handleGoogleError,
+  handleMicrosoftLogin,
+}) {
   return (
     <Stack spacing={1}>
       {/* GOOGLE OAUTH - Overridden */}
@@ -43,11 +47,15 @@ function AuthButtons({ handleGoogleSuccess, handleGoogleError, handleMicrosoftLo
         onSuccess={handleGoogleSuccess}
         onError={handleGoogleError}
         useOneTap={false}
-        // 2) Render prop => custom MUI styling
-        render={(renderProps) => (
+        theme="outline"
+        size="large"
+        width="100%"
+        context="signin"
+        auto_select={false}
+        render={({ onClick, disabled }) => (
           <OAuthButton
-            onClick={renderProps.onClick}
-            disabled={renderProps.disabled}
+            onClick={onClick}
+            disabled={disabled}
             startIcon={<GoogleIcon />}
             fullWidth
           >

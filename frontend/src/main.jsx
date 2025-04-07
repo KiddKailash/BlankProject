@@ -15,6 +15,8 @@ import React, { useMemo } from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter as Router } from "react-router-dom";
 import App from "./App";
+
+// Local Contexts
 import { SnackbarProvider } from "./contexts/SnackbarContext";
 import { UserProvider } from "./services/UserContext";
 
@@ -35,10 +37,21 @@ const msalConfig = {
       import.meta.env.VITE_MICROSOFT_TENANT_ID
     }`,
     redirectUri: window.location.origin,
+    navigateToLoginRequestUrl: true,
+  },
+  cache: {
+    cacheLocation: "sessionStorage",
+    storeAuthStateInCookie: false,
   },
 };
 
-const pca = new PublicClientApplication(msalConfig);
+// Initialize MSAL with improved error handling
+let pca = null;
+try {
+  pca = new PublicClientApplication(msalConfig);
+} catch (error) {
+  console.error("MSAL Initialization Error:", error);
+}
 
 /**
  * Root component that sets up the global theme and routing for the application.
