@@ -24,13 +24,44 @@ export const UserProvider = ({ children }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // On mount, check if there's a token in local storage
-    const token = localStorage.getItem("access_token");
-    if (token) {
-      // In a real app, you could verify this token with the server here.
-      setIsLoggedIn(true);
-    }
-    setAuthLoading(false);
+    const verifyToken = async () => {
+      const token = localStorage.getItem("access_token");
+      if (!token) {
+        // No token, so user is not logged in
+        setAuthLoading(false);
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          "http://localhost:8080/authorisation/verify",
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (response.ok) {
+          // Token valid
+          setIsLoggedIn(true);
+        } else {
+          // Token invalid/expired
+          localStorage.removeItem("access_token");
+          setIsLoggedIn(false);
+        }
+      } catch (error) {
+        console.error("Error verifying token:", error);
+        // On any error, treat as not logged in
+        localStorage.removeItem("access_token");
+        setIsLoggedIn(false);
+      } finally {
+        setAuthLoading(false);
+      }
+    };
+
+    verifyToken();
   }, []);
 
   /************************************************
@@ -52,11 +83,14 @@ export const UserProvider = ({ children }) => {
    ************************************************/
   const login = async (email, password) => {
     try {
-      const response = await fetch("http://localhost:8080/authorisation/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+      const response = await fetch(
+        "http://localhost:8080/authorisation/login",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        }
+      );
       return handleAuthResponse(response);
     } catch (error) {
       console.error("Login error:", error);
@@ -69,11 +103,14 @@ export const UserProvider = ({ children }) => {
    ************************************************/
   const registerUser = async (name, email, password) => {
     try {
-      const response = await fetch("http://localhost:8080/authorisation/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password }),
-      });
+      const response = await fetch(
+        "http://localhost:8080/authorisation/register",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, email, password }),
+        }
+      );
       return handleAuthResponse(response);
     } catch (error) {
       console.error("Register error:", error);
@@ -86,11 +123,14 @@ export const UserProvider = ({ children }) => {
    ************************************************/
   const loginWithGoogle = async (googleToken) => {
     try {
-      const response = await fetch("http://localhost:8080/authorisation/google-auth", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token: googleToken }),
-      });
+      const response = await fetch(
+        "http://localhost:8080/authorisation/google-auth",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token: googleToken }),
+        }
+      );
       return handleAuthResponse(response);
     } catch (error) {
       console.error("Google login error:", error);
@@ -103,11 +143,14 @@ export const UserProvider = ({ children }) => {
    ************************************************/
   const loginWithMicrosoft = async (msToken) => {
     try {
-      const response = await fetch("http://localhost:8080/authorisation/microsoft-auth", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token: msToken }),
-      });
+      const response = await fetch(
+        "http://localhost:8080/authorisation/microsoft-auth",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token: msToken }),
+        }
+      );
       return handleAuthResponse(response);
     } catch (error) {
       console.error("Microsoft login error:", error);
