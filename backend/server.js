@@ -5,26 +5,28 @@ const rateLimit = require("express-rate-limit");
 const bodyParser = require("body-parser");
 const { connectDB, getDB } = require("./database/db");
 
-const app = express();
+// Routes Imports
+const authorisationRoutes = require("./routes/authorisationRoutes"); 
 
-// Allows DigitalOcean Load Balancing (or other proxies)
+const app = express();
 app.set("trust proxy", 1);
 
 const PORT = process.env.PORT || 8080;
 
-// For your Stripe webhook. If you don't have this yet, just keep the placeholder:
+// Example placeholder for Stripe webhook
 const webhookHandler = (req, res) => {
   res.status(200).send("Webhook received!");
 };
 
+// Connect to Mongo
 connectDB()
   .then(() => {
     // Setup CORS
-    const allowedOrigins = ["http://localhost:5173", "https://vellum.netlify.app"];
+    const allowedOrigins = ["http://localhost:5173", "https://vellum-iota.vercel.app/"];
     app.use(
       cors({
         origin: function (origin, callback) {
-          if (!origin) return callback(null, true); // server-to-server or CLI
+          if (!origin) return callback(null, true);
           if (allowedOrigins.includes(origin)) {
             return callback(null, true);
           }
@@ -33,26 +35,28 @@ connectDB()
       })
     );
 
-    // Rate Limiting
+    // Rate limit
     const limiter = rateLimit({
-      windowMs: 15 * 60 * 1000, // 15 minutes
-      max: 500, // requests per window
+      windowMs: 15 * 60 * 1000,
+      max: 500,
       message: "Too many requests from this IP, please try again later.",
     });
     app.use(limiter);
 
-    // 1) Stripe webhook endpoint (raw body).
+    // 1) Stripe webhook endpoint (raw body)
     app.post("/api/webhook", bodyParser.raw({ type: "application/json" }), webhookHandler);
 
-    // 2) Global JSON parsing
+    // 2) Global body parsing
     app.use(express.json({ limit: "20mb" }));
     app.use(express.urlencoded({ limit: "20mb", extended: true }));
 
-    // Example route to show how to use the DB connection
+    // Mount your authorisation routes at /authorisation
+    app.use("/authorisation", authorisationRoutes);
+
+    // A quick example using getDB()
     app.get("/api/users", async (req, res) => {
       try {
         const db = getDB();
-        // Suppose you have a 'users' collection in your 'vellum' DB
         const users = await db.collection("users").find().toArray();
         res.json(users);
       } catch (error) {
@@ -61,7 +65,7 @@ connectDB()
       }
     });
 
-    // A simple "Hello" route to confirm the server is running
+    // A simple root route
     app.get("/", (req, res) => {
       res.send("Hello from the Node.js server with MongoDB!");
     });

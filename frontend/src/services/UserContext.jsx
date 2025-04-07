@@ -1,61 +1,141 @@
 import React, { createContext, useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 /**
- * @fileoverview Provides a UserContext with dummy authentication logic for development.
- *
- * The UserContext supplies authentication state (isLoggedIn), a loading flag (authLoading) to indicate
- * when authentication is being checked, and simple login and logout functions. This is placeholder logic
- * until the backend is implemented.
+ * @fileoverview Provides a UserContext which handles authentication logic
+ * (login, register, Google auth, Microsoft auth) and stores the token/user data.
  *
  * @module UserContext
  */
 
-// Create a context with default values
 const UserContext = createContext({
   isLoggedIn: false,
   authLoading: true,
-  login: () => {},
+  login: async () => {},
+  registerUser: async () => {},
+  loginWithGoogle: async () => {},
+  loginWithMicrosoft: async () => {},
   logout: () => {},
 });
 
-/**
- * UserProvider component that simulates an asynchronous authentication check.
- *
- * This provider wraps the application and makes authentication state available via the context.
- * For now, it simulates a 1-second delay before setting authLoading to false and defaults to not logged in.
- *
- * @component
- * @param {Object} props - Component props.
- * @param {React.ReactNode} props.children - Child components that will have access to UserContext.
- * @returns {JSX.Element} The UserContext provider.
- */
 export const UserProvider = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
+  const navigate = useNavigate();
 
-  // Simulate an asynchronous authentication check
   useEffect(() => {
-    const timer = setTimeout(() => {
-      // For now, we assume the user is not logged in.
-      setIsLoggedIn(false);
-      setAuthLoading(false);
-    }, 1000);
-
-    return () => clearTimeout(timer);
+    // On mount, check if there's a token in local storage
+    const token = localStorage.getItem("access_token");
+    if (token) {
+      // In a real app, you could verify this token with the server here.
+      setIsLoggedIn(true);
+    }
+    setAuthLoading(false);
   }, []);
 
-  // Dummy login function
-  const login = () => {
-    setIsLoggedIn(true);
+  /************************************************
+   * Helper: handle server response
+   ************************************************/
+  const handleAuthResponse = async (response) => {
+    const data = await response.json();
+    if (response.ok) {
+      localStorage.setItem("access_token", data.access);
+      setIsLoggedIn(true);
+      return { success: true, data };
+    } else {
+      return { success: false, message: data?.message || "Auth failed" };
+    }
   };
 
-  // Dummy logout function
+  /************************************************
+   * EMAIL/PASSWORD LOGIN
+   ************************************************/
+  const login = async (email, password) => {
+    try {
+      const response = await fetch("http://localhost:8080/authorisation/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      return handleAuthResponse(response);
+    } catch (error) {
+      console.error("Login error:", error);
+      return { success: false, message: "Server error" };
+    }
+  };
+
+  /************************************************
+   * EMAIL/PASSWORD REGISTER
+   ************************************************/
+  const registerUser = async (name, email, password) => {
+    try {
+      const response = await fetch("http://localhost:8080/authorisation/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password }),
+      });
+      return handleAuthResponse(response);
+    } catch (error) {
+      console.error("Register error:", error);
+      return { success: false, message: "Server error" };
+    }
+  };
+
+  /************************************************
+   * GOOGLE OAUTH
+   ************************************************/
+  const loginWithGoogle = async (googleToken) => {
+    try {
+      const response = await fetch("http://localhost:8080/authorisation/google-auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: googleToken }),
+      });
+      return handleAuthResponse(response);
+    } catch (error) {
+      console.error("Google login error:", error);
+      return { success: false, message: "Server error" };
+    }
+  };
+
+  /************************************************
+   * MICROSOFT OAUTH
+   ************************************************/
+  const loginWithMicrosoft = async (msToken) => {
+    try {
+      const response = await fetch("http://localhost:8080/authorisation/microsoft-auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: msToken }),
+      });
+      return handleAuthResponse(response);
+    } catch (error) {
+      console.error("Microsoft login error:", error);
+      return { success: false, message: "Server error" };
+    }
+  };
+
+  /************************************************
+   * LOGOUT
+   ************************************************/
   const logout = () => {
+    localStorage.removeItem("access_token");
     setIsLoggedIn(false);
+    navigate("/auth?mode=login");
   };
 
   return (
-    <UserContext.Provider value={{ isLoggedIn, authLoading, login, logout }}>
+    <UserContext.Provider
+      value={{
+        isLoggedIn,
+        authLoading,
+        login,
+        registerUser,
+        loginWithGoogle,
+        loginWithMicrosoft,
+        logout,
+      }}
+    >
       {children}
     </UserContext.Provider>
   );

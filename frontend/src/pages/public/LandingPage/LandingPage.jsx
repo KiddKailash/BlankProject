@@ -36,12 +36,12 @@ const LandingPage = () => {
             </Box>
 
             {/* Right Side */}
-            <Stack direction="row" spacing={0.5}>
+            <Stack direction="row" spacing={1.5}>
               <Button onClick={handleLogin} color="primary">
                 Log in
               </Button>
               <Button variant="contained" onClick={handleRegister}>
-                Get Access ↗
+                Get Access
               </Button>
             </Stack>
           </Stack>

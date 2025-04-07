@@ -9,8 +9,11 @@
  * @module Sidebar
  */
 
-import React from "react";
+import React, { useContext } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+
+// Local Imports
+import UserContext from "../services/UserContext";
 
 // MUI Components
 import Box from "@mui/material/Box";
@@ -78,6 +81,9 @@ const Sidebar = () => {
   // Track whether the sidebar is collapsed
   const [collapsed, setCollapsed] = React.useState(false);
 
+  // Import UserContext to manage user authentication state
+  const { logout } = useContext(UserContext);
+
   /**
    * Determines if a given navigation path is active.
    *
@@ -89,6 +95,11 @@ const Sidebar = () => {
 
   // Compute dynamic sidebar width based on collapsed state.
   const SIDEBAR_WIDTH = collapsed ? 72 : 240;
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/auth?mode=login");
+  };
 
   return (
     <Box
@@ -197,11 +208,7 @@ const Sidebar = () => {
               disableHoverListener={!collapsed}
             >
               <ListItemButton
-                onClick={() =>
-                  isLogout
-                    ? console.log("Logout logic here")
-                    : navigate(`/${text.toLowerCase()}`)
-                }
+                onClick={handleLogout}
                 sx={{
                   borderRadius: 2,
                   color: isLogout ? "error.main" : "inherit",
