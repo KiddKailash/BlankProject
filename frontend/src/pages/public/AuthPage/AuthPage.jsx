@@ -2,10 +2,10 @@ import React, { useState, useContext } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useMsal } from "@azure/msal-react";
 
-// Local import
+// Local imports
 import AuthButtons from "./AuthButtons";
 
-// MUI imports
+// MUI
 import Container from "@mui/material/Container";
 import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
@@ -15,7 +15,8 @@ import Box from "@mui/material/Box";
 import Divider from "@mui/material/Divider";
 import Link from "@mui/material/Link";
 
-// Context for toast/snackbar messages
+// Context
+import UserContext from "../../../services/UserContext";
 import { SnackbarContext } from "../../../contexts/SnackbarContext";
 
 const AuthPage = () => {
@@ -27,6 +28,10 @@ const AuthPage = () => {
 
   // Our UI alert system
   const { showSnackbar } = useContext(SnackbarContext);
+
+  // Pull methods from UserContext
+  const { login, registerUser, loginWithGoogle, loginWithMicrosoft } =
+    useContext(UserContext);
 
   // Determine if in login mode or register mode
   const mode = new URLSearchParams(location.search).get("mode");
@@ -43,27 +48,16 @@ const AuthPage = () => {
     navigate(`?mode=${newMode}`);
   };
 
-  // ---------------------------
-  // Google OAuth Handlers
-  // ---------------------------
+  /************************************************
+   * Google OAuth success/failure
+   ************************************************/
   const handleGoogleSuccess = async (credentialResponse) => {
-    try {
-      const response = await fetch("http://localhost:8000/teachers/google-auth/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token: credentialResponse.credential }),
-      });
-
-      const data = await response.json();
-      if (response.ok) {
-        localStorage.setItem("access_token", data.access);
-        showSnackbar("Google login successful!", "success");
-        navigate("/dashboard");
-      } else {
-        showSnackbar("Google login failed", "error");
-      }
-    } catch (error) {
-      showSnackbar("Google login failed", "error");
+    const result = await loginWithGoogle(credentialResponse.credential);
+    if (result.success) {
+      showSnackbar("Google login successful!", "success");
+      navigate("/dashboard");
+    } else {
+      showSnackbar(result.message, "error");
     }
   };
 
@@ -71,32 +65,21 @@ const AuthPage = () => {
     showSnackbar("Google login failed", "error");
   };
 
-  // ---------------------------
-  // Microsoft OAuth Handler
-  // ---------------------------
+  /************************************************
+   * Microsoft OAuth
+   ************************************************/
   const handleMicrosoftLogin = async () => {
     try {
-      // 1) Popup the Microsoft login
-      const response = await instance.loginPopup({
-        scopes: ["user.read"],
-        prompt: "select_account",
-      });
-
-      // 2) If MSAL returns an accessToken, forward it to your backend
-      if (response.accessToken) {
-        const msAuthResponse = await fetch("http://localhost:8000/teachers/microsoft-auth/", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token: response.accessToken }),
-        });
-
-        const data = await msAuthResponse.json();
-        if (msAuthResponse.ok) {
-          localStorage.setItem("access_token", data.access);
+      // 1) Open a popup for Microsoft sign in
+      const response = await instance.loginPopup({ scopes: ["User.Read"] });
+      if (response && response.accessToken) {
+        // 2) Send token to the backend
+        const result = await loginWithMicrosoft(response.accessToken);
+        if (result.success) {
           showSnackbar("Microsoft login successful!", "success");
           navigate("/dashboard");
         } else {
-          showSnackbar("Microsoft login failed", "error");
+          showSnackbar(result.message, "error");
         }
       }
     } catch (error) {
@@ -104,49 +87,28 @@ const AuthPage = () => {
     }
   };
 
-  // ---------------------------
-  // Normal Email/Password Auth
-  // ---------------------------
+  /************************************************
+   * Normal Email/Password
+   ************************************************/
   const handleLogin = async (e) => {
     e.preventDefault();
-    try {
-      const response = await fetch("http://localhost:8000/teachers/login/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await response.json();
-      if (response.ok) {
-        localStorage.setItem("access_token", data.access);
-        showSnackbar("Login successful!", "success");
-        navigate("/dashboard");
-      } else {
-        showSnackbar(data?.message || "Login failed", "error");
-      }
-    } catch (error) {
-      showSnackbar("Login failed", "error");
+    const result = await login(email, password);
+    if (result.success) {
+      showSnackbar("Login successful!", "success");
+      navigate("/dashboard");
+    } else {
+      showSnackbar(result.message, "error");
     }
   };
 
   const handleRegister = async (e) => {
     e.preventDefault();
-    try {
-      const response = await fetch("http://localhost:8000/teachers/register/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password }),
-      });
-
-      const data = await response.json();
-      if (response.ok) {
-        localStorage.setItem("access_token", data.access);
-        showSnackbar("Registration successful!", "success");
-        navigate("/dashboard");
-      } else {
-        showSnackbar(data?.message || "Registration failed", "error");
-      }
-    } catch (error) {
-      showSnackbar("Registration failed", "error");
+    const result = await registerUser(name, email, password);
+    if (result.success) {
+      showSnackbar("Registration successful!", "success");
+      navigate("/dashboard");
+    } else {
+      showSnackbar(result.message, "error");
     }
   };
 
@@ -167,6 +129,7 @@ const AuthPage = () => {
           <Typography variant="h4" align="center" gutterBottom>
             {isLogin ? "Sign in to Account" : "Register Account"}
           </Typography>
+
           <Typography variant="subtitle1" align="center" color="text.secondary">
             {isLogin ? (
               <>
@@ -232,6 +195,7 @@ const AuthPage = () => {
             onChange={(e) => setEmail(e.target.value)}
             variant="outlined"
           />
+
           <TextField
             fullWidth
             label="Password"

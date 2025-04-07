@@ -1,4 +1,3 @@
-// AuthButtons.jsx
 import React from "react";
 import { GoogleLogin } from "@react-oauth/google";
 
@@ -35,10 +34,14 @@ const OAuthButton = styled(Button)(({ theme }) => ({
   },
 }));
 
-function AuthButtons({ handleGoogleSuccess, handleGoogleError, handleMicrosoftLogin }) {
+function AuthButtons({
+  handleGoogleSuccess,
+  handleGoogleError,
+  handleMicrosoftLogin,
+}) {
   return (
     <Stack spacing={1}>
-      {/* GOOGLE OAUTH - Overridden */}
+      {/* GOOGLE OAUTH */}
       <GoogleLogin
         onSuccess={handleGoogleSuccess}
         onError={handleGoogleError}
@@ -56,7 +59,7 @@ function AuthButtons({ handleGoogleSuccess, handleGoogleError, handleMicrosoftLo
         )}
       />
 
-      {/* MICROSOFT OAUTH - Same style */}
+      {/* MICROSOFT OAUTH */}
       <OAuthButton
         onClick={handleMicrosoftLogin}
         startIcon={<MicrosoftIcon />}
