@@ -1,16 +1,21 @@
 import React from "react";
 import { GoogleLogin } from "@react-oauth/google";
 
-// MUI imports
+// Material-UI components and styling utilities.
 import Stack from "@mui/material/Stack";
 import Button from "@mui/material/Button";
 import { styled } from "@mui/material/styles";
 
-// Icons
+// Icons for branding.
 import GoogleIcon from "@mui/icons-material/Google";
-import MicrosoftIcon from "@mui/icons-material/Window"; // or any MS icon
+import MicrosoftIcon from "@mui/icons-material/Window"; // or any Microsoft icon
 
-// 1) Create a shared style for both Google & Microsoft
+/**
+ * OAuthButton
+ *
+ * A styled Button component that provides a shared style for OAuth buttons.
+ * The style includes custom background, typography, border, and hover effects.
+ */
 const OAuthButton = styled(Button)(({ theme }) => ({
   backgroundColor: "#fff",
   color: "#3c4043",
@@ -28,12 +33,27 @@ const OAuthButton = styled(Button)(({ theme }) => ({
     boxShadow: "none",
     borderColor: "#c6c6c6",
   },
-  // Hides the MUI ripple
+  // Hides the MUI ripple effect.
   "& .MuiTouchRipple-root": {
     display: "none",
   },
 }));
 
+/**
+ * AuthButtons Component
+ *
+ * Renders OAuth buttons for Google and Microsoft authentication.
+ * It leverages the GoogleLogin component for handling Google OAuth,
+ * and a custom-styled button for Microsoft OAuth.
+ *
+ * @param {object} props - Component properties.
+ * @param {Function} props.handleGoogleSuccess - Callback executed upon successful Google login.
+ * @param {Function} props.handleGoogleError - Callback executed if Google login fails.
+ * @param {Function} props.handleMicrosoftLogin - Function to handle Microsoft login when its button is clicked.
+ * @param {object} props.msalInstance - Instance of the Microsoft Authentication Library (if applicable).
+ *
+ * @returns {JSX.Element} A component that renders a stack of authentication buttons.
+ */
 function AuthButtons({
   handleGoogleSuccess,
   handleGoogleError,
@@ -42,7 +62,7 @@ function AuthButtons({
 }) {
   return (
     <Stack spacing={1}>
-      {/* GOOGLE OAUTH */}
+      {/* Google OAuth Button */}
       <GoogleLogin
         onSuccess={handleGoogleSuccess}
         onError={handleGoogleError}
@@ -52,11 +72,12 @@ function AuthButtons({
         width="100%"
         context="signin"
         auto_select={false}
+        // Render custom-styled button using the OAuthButton component.
         render={({ onClick, disabled }) => (
           <OAuthButton
             onClick={onClick}
             disabled={disabled}
-            startIcon={<GoogleIcon />}
+            startIcon={<GoogleIcon />} // Display Google icon.
             fullWidth
           >
             Continue with Google
@@ -64,10 +85,10 @@ function AuthButtons({
         )}
       />
 
-      {/* MICROSOFT OAUTH */}
+      {/* Microsoft OAuth Button */}
       <OAuthButton
         onClick={handleMicrosoftLogin}
-        startIcon={<MicrosoftIcon />}
+        startIcon={<MicrosoftIcon />} // Display Microsoft icon.
         fullWidth
       >
         Continue with Microsoft
