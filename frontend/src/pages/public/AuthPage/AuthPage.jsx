@@ -151,7 +151,7 @@ const AuthPage = () => {
   };
 
   return (
-    <Container maxWidth="xs" sx={{ p: 12 }}>
+    <Container maxWidth="xs" sx={{my: {xs: 3, sm: 8}}}>
       <Box
         component="form"
         noValidate
@@ -165,7 +165,7 @@ const AuthPage = () => {
       >
         <Stack direction="column" spacing={1.5}>
           <Typography variant="h4" align="center" gutterBottom>
-            {isLogin ? "Welcome back!" : "Register Account"}
+            {isLogin ? "Sign in to Account" : "Register Account"}
           </Typography>
           <Typography variant="subtitle1" align="center" color="text.secondary">
             {isLogin ? (

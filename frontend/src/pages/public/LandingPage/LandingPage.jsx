@@ -26,7 +26,6 @@ const LandingPage = () => {
             direction="row"
             justifyContent="space-between"
             alignItems="center"
-            verticalAlign="middle"
           >
             {/* Left Side */}
             <Box display="flex" alignItems="center" gap={1}>
@@ -37,7 +36,7 @@ const LandingPage = () => {
             </Box>
 
             {/* Right Side */}
-            <Stack direction="row" spacing={2}>
+            <Stack direction="row" spacing={0.5}>
               <Button onClick={handleLogin} color="primary">
                 Log in
               </Button>
