@@ -39,6 +39,7 @@ function AuthButtons({
   handleGoogleSuccess,
   handleGoogleError,
   handleMicrosoftLogin,
+  msalInstance,
 }) {
   return (
     <Stack spacing={1}>

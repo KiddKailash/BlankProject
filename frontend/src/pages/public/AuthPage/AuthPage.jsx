@@ -21,11 +21,7 @@ import { SnackbarContext } from "../../../contexts/SnackbarContext";
 const AuthPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
-
-  // MSAL instance for Microsoft
   const { instance } = useMsal();
-
-  // Our UI alert system
   const { showSnackbar } = useContext(SnackbarContext);
 
   // Determine if in login mode or register mode
@@ -43,9 +39,7 @@ const AuthPage = () => {
     navigate(`?mode=${newMode}`);
   };
 
-  // ---------------------------
-  // Google OAuth Handlers
-  // ---------------------------
+  // OAuth success handlers
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
       const response = await fetch("http://localhost:8000/teachers/google-auth/", {
@@ -71,18 +65,8 @@ const AuthPage = () => {
     showSnackbar("Google login failed", "error");
   };
 
-  // ---------------------------
-  // Microsoft OAuth Handler
-  // ---------------------------
-  const handleMicrosoftLogin = async () => {
+  const handleMicrosoftLogin = async (response) => {
     try {
-      // 1) Popup the Microsoft login
-      const response = await instance.loginPopup({
-        scopes: ["user.read"],
-        prompt: "select_account",
-      });
-
-      // 2) If MSAL returns an accessToken, forward it to your backend
       if (response.accessToken) {
         const msAuthResponse = await fetch("http://localhost:8000/teachers/microsoft-auth/", {
           method: "POST",
@@ -104,9 +88,7 @@ const AuthPage = () => {
     }
   };
 
-  // ---------------------------
   // Normal Email/Password Auth
-  // ---------------------------
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
@@ -151,7 +133,7 @@ const AuthPage = () => {
   };
 
   return (
-    <Container maxWidth="xs" sx={{my: {xs: 3, sm: 8}}}>
+    <Container maxWidth="xs" sx={{ my: { xs: 3, sm: 8 } }}>
       <Box
         component="form"
         noValidate
@@ -193,25 +175,19 @@ const AuthPage = () => {
             )}
           </Typography>
 
-          {/* 
-            OAuth Buttons:
-            We pass down the handlers for Google & Microsoft 
-            so AuthButtons can render them with matching styles.
-          */}
           <AuthButtons
             handleGoogleSuccess={handleGoogleSuccess}
             handleGoogleError={handleGoogleError}
             handleMicrosoftLogin={handleMicrosoftLogin}
+            msalInstance={instance}
           />
 
-          {/* Divider for normal email/password or sign-up */}
           <Stack direction="row" alignItems="center" spacing={2}>
             <Divider sx={{ flex: 1 }} />
             <Typography variant="subtitle2">or</Typography>
             <Divider sx={{ flex: 1 }} />
           </Stack>
 
-          {/* Name field only if registering */}
           {!isLogin && (
             <TextField
               fullWidth
@@ -223,7 +199,6 @@ const AuthPage = () => {
             />
           )}
 
-          {/* Email/Password Fields */}
           <TextField
             fullWidth
             label="Email"
@@ -241,7 +216,6 @@ const AuthPage = () => {
             variant="outlined"
           />
 
-          {/* Submit Button */}
           <Button fullWidth type="submit" variant="contained" color="primary">
             {isLogin ? "Login" : "Register"}
           </Button>
