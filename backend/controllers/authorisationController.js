@@ -1,26 +1,54 @@
+/**
+ * Authentication Controller
+ *
+ * This module provides controller functions for user authentication including registration,
+ * email/password login, and OAuth-based authentication with Google and Microsoft.
+ *
+ * It includes functionality to:
+ * - Hash and store user passwords.
+ * - Generate and sign JWT tokens with the user's id.
+ * - Verify Google ID tokens and upsert users based on Google credentials.
+ * - Decode Microsoft tokens (for demo purposes) and upsert users based on Microsoft credentials.
+ *
+ * Dependencies:
+ * - bcrypt: For hashing passwords.
+ * - jsonwebtoken (jwt/msJwt): For signing and verifying tokens.
+ * - google-auth-library: For verifying Google ID tokens.
+ * - A MongoDB connection module providing `getDB`.
+ */
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { OAuth2Client } = require("google-auth-library");
 const msJwt = require("jsonwebtoken");
 const { getDB } = require("../database/db");
 
-// Google client (for verifying Google ID tokens)
+// Initialize Google OAuth2 client with the Google Client ID from environment variables.
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 /**
- * Helper function to create JWT with the user's ID.
- * @param {string} userId - The _id of the user (as a string).
+ * Creates a JWT token containing the user's ID.
+ *
+ * @param {string} userId - The unique identifier of the user.
+ * @returns {string} A JWT token that expires in 1 day.
  */
 function createToken(userId) {
-  // In production, always use a secure secret from env
+  // Use a secret from environment variables if available; otherwise default to "mysecret".
   return jwt.sign({ userId }, process.env.JWT_SECRET || "mysecret", {
     expiresIn: "1d",
   });
 }
 
 /**
- * Registers a new user with name/email/password.
- * Expects req.body: { name, email, password }
+ * Registers a new user using name, email, and password.
+ *
+ * Expects the following in req.body:
+ *   { name, email, password }
+ *
+ * Validates that all fields are provided, checks that the user doesn't already exist,
+ * hashes the password, inserts the new user into the database, and returns a signed JWT.
+ *
+ * @param {object} req - Express request object.
+ * @param {object} res - Express response object.
  */
 async function registerUser(req, res) {
   try {
@@ -32,7 +60,7 @@ async function registerUser(req, res) {
     const db = getDB();
     const usersCollection = db.collection("users");
 
-    // Check if user already exists
+    // Check if a user with the specified email already exists.
     const existing = await usersCollection.findOne({ email });
     if (existing) {
       return res
@@ -40,10 +68,10 @@ async function registerUser(req, res) {
         .json({ message: "User with that email already exists" });
     }
 
-    // Hash password
+    // Hash the password with bcrypt using 10 rounds.
     const passwordHash = await bcrypt.hash(password, 10);
 
-    // Create user doc
+    // Create a new user document.
     const newUser = {
       name,
       email,
@@ -53,12 +81,11 @@ async function registerUser(req, res) {
       createdAt: new Date(),
     };
 
-    // Insert into MongoDB
+    // Insert the new user into the database.
     const result = await usersCollection.insertOne(newUser);
-    // The newly created user’s _id
     const userId = result.insertedId.toString();
 
-    // Issue JWT
+    // Generate and return a JWT with the user's id.
     const token = createToken(userId);
     return res.json({ access: token });
   } catch (error) {
@@ -68,8 +95,15 @@ async function registerUser(req, res) {
 }
 
 /**
- * Logs in a user with email/password.
- * Expects req.body: { email, password }
+ * Logs in a user with email and password.
+ *
+ * Expects the following in req.body:
+ *   { email, password }
+ *
+ * Checks that the provided credentials match a stored user, then returns a signed JWT.
+ *
+ * @param {object} req - Express request object.
+ * @param {object} res - Express response object.
  */
 async function loginUser(req, res) {
   try {
@@ -81,19 +115,19 @@ async function loginUser(req, res) {
     const db = getDB();
     const usersCollection = db.collection("users");
 
-    // Find user by email
+    // Look for the user by email.
     const user = await usersCollection.findOne({ email });
     if (!user) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    // Compare hashed password
+    // Check if the provided password matches the hashed password stored.
     const isMatch = await bcrypt.compare(password, user.passwordHash);
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    // Create a JWT
+    // Generate a JWT token using the user's id.
     const token = createToken(user._id.toString());
     return res.json({ access: token });
   } catch (error) {
@@ -103,8 +137,16 @@ async function loginUser(req, res) {
 }
 
 /**
- * Verifies a Google ID token, upserts user, returns JWT.
- * Expects req.body: { token }
+ * Authenticates a user with a Google ID token.
+ *
+ * Expects the following in req.body:
+ *   { token }
+ *
+ * Verifies the token with Google, upserts the user in the database (creating one if needed or
+ * updating an existing record), and returns a JWT.
+ *
+ * @param {object} req - Express request object.
+ * @param {object} res - Express response object.
  */
 async function googleAuth(req, res) {
   try {
@@ -113,12 +155,11 @@ async function googleAuth(req, res) {
       return res.status(400).json({ message: "Google token not provided" });
     }
 
-    // Verify Google token
+    // Verify the Google token and extract the payload.
     const ticket = await googleClient.verifyIdToken({
       idToken: token,
       audience: process.env.GOOGLE_CLIENT_ID,
     });
-
     const payload = ticket.getPayload();
     const { sub, email, name } = payload;
     if (!sub) {
@@ -128,13 +169,13 @@ async function googleAuth(req, res) {
     const db = getDB();
     const usersCollection = db.collection("users");
 
-    // Find user by googleId or email
+    // Look for a user with the provided Google ID or email.
     let user = await usersCollection.findOne({
       $or: [{ googleId: sub }, { email }],
     });
 
     if (!user) {
-      // Create user if not found
+      // If user is not found, create a new record.
       const doc = {
         name: name || "No Name",
         email,
@@ -146,17 +187,18 @@ async function googleAuth(req, res) {
       const result = await usersCollection.insertOne(doc);
       user = { _id: result.insertedId, ...doc };
     } else {
-      // If user found by email but missing googleId, attach it
+      // If the user is found by email but without a googleId, update the record.
       if (!user.googleId) {
         await usersCollection.updateOne(
           { _id: user._id },
           { $set: { googleId: sub } }
         );
-        user.googleId = sub; // update local variable
+        // Reflect the change in the local variable.
+        user.googleId = sub;
       }
     }
 
-    // Return JWT
+    // Issue and return a JWT for the user.
     const jwtToken = createToken(user._id.toString());
     return res.json({ access: jwtToken });
   } catch (error) {
@@ -166,9 +208,17 @@ async function googleAuth(req, res) {
 }
 
 /**
- * Decodes an MSAL token from the frontend, upserts user, returns JWT.
- * Expects req.body: { token }
- * Production usage would validate this token signature or call MS Graph.
+ * Authenticates a user using a Microsoft authentication token.
+ *
+ * Expects the following in req.body:
+ *   { token }
+ *
+ * This function decodes the token (for demonstration purposes only; production usage would require
+ * token signature verification or a call to the Microsoft Graph API), upserts the user in the database,
+ * and returns a JWT.
+ *
+ * @param {object} req - Express request object.
+ * @param {object} res - Express response object.
  */
 async function microsoftAuth(req, res) {
   try {
@@ -177,13 +227,13 @@ async function microsoftAuth(req, res) {
       return res.status(400).json({ message: "Microsoft token not provided" });
     }
 
-    // Decode the token (demo only)
+    // Decode the token without verifying the signature (demo only).
     const decoded = msJwt.decode(token);
     if (!decoded) {
       return res.status(400).json({ message: "Invalid MS token" });
     }
 
-    // Typically found in 'preferred_username', 'upn', or 'email'
+    // Extract the user's email from one of the token fields.
     const email = decoded.preferred_username || decoded.upn || decoded.email;
     if (!email) {
       return res
@@ -191,7 +241,7 @@ async function microsoftAuth(req, res) {
         .json({ message: "Token missing user email. Cannot proceed." });
     }
 
-    // Usually found in 'oid' or 'sub'
+    // Extract the unique Microsoft id from the token.
     const msId = decoded.oid || decoded.sub;
     if (!msId) {
       return res
@@ -202,12 +252,12 @@ async function microsoftAuth(req, res) {
     const db = getDB();
     const usersCollection = db.collection("users");
 
-    // Find user by microsoftId or email
+    // Look for a user by microsoftId or by email.
     let user = await usersCollection.findOne({
       $or: [{ microsoftId: msId }, { email }],
     });
     if (!user) {
-      // Create if not found
+      // If no user is found, create a new record.
       const doc = {
         name: "Microsoft User",
         email,
@@ -219,7 +269,7 @@ async function microsoftAuth(req, res) {
       const result = await usersCollection.insertOne(doc);
       user = { _id: result.insertedId, ...doc };
     } else {
-      // If found by email but missing msId, attach it
+      // If user is found by email but is missing the microsoftId, update the record.
       if (!user.microsoftId) {
         await usersCollection.updateOne(
           { _id: user._id },
@@ -229,7 +279,7 @@ async function microsoftAuth(req, res) {
       }
     }
 
-    // Return your own JWT
+    // Generate a JWT using the user's ID and return it.
     const jwtToken = createToken(user._id.toString());
     return res.json({ access: jwtToken });
   } catch (error) {
@@ -238,7 +288,7 @@ async function microsoftAuth(req, res) {
   }
 }
 
-// Export all controller methods as an object
+// Export all authentication controller methods.
 module.exports = {
   registerUser,
   loginUser,
