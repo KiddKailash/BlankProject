@@ -50,7 +50,7 @@ const TypewriterEffect = () => {
 
   return (
     <Box display="flex" justifyContent="center" alignItems="center">
-      <Typography variant="h1" component="span">
+      <Typography component="span" sx={{ typography: { xs: 'h2', sm: 'h1' } }} color="primary">
         {displayedText}
         <Box
           sx={{

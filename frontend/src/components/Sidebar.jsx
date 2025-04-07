@@ -114,6 +114,7 @@ const Sidebar = () => {
         <IconButton
           onClick={() => setCollapsed(!collapsed)}
           size="small"
+          color="primary"
           sx={{ mr: collapsed ? 0 : 1, borderRadius: 2 }}
         >
           {collapsed ? <MenuIcon /> : <MenuOpenIcon />}
