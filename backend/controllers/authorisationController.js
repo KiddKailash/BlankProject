@@ -118,13 +118,13 @@ async function loginUser(req, res) {
     // Look for the user by email.
     const user = await usersCollection.findOne({ email });
     if (!user) {
-      return res.status(401).json({ message: "Invalid credentials" });
+      return res.status(401).json({ message: "Account does not exist" });
     }
 
     // Check if the provided password matches the hashed password stored.
     const isMatch = await bcrypt.compare(password, user.passwordHash);
     if (!isMatch) {
-      return res.status(401).json({ message: "Invalid credentials" });
+      return res.status(401).json({ message: "Incorrect Password" });
     }
 
     // Generate a JWT token using the user's id.

@@ -70,12 +70,12 @@ connectDB()
 
     // Setup rate limiter middleware.
     // Limit each IP to 500 requests per 15 minutes.
-    const limiter = rateLimit({
-      windowMs: 15 * 60 * 1000,
-      max: 500,
-      message: "Too many requests from this IP, please try again later.",
-    });
-    app.use(limiter);
+    // const limiter = rateLimit({
+    //   windowMs: 15 * 60 * 1000,
+    //   max: 500,
+    //   message: "Too many requests from this IP, please try again later.",
+    // });
+    // app.use(limiter);
 
     // 1) Stripe webhook endpoint with raw body parser
     // This endpoint expects a raw body for correct webhook signature validation.
