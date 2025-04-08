@@ -126,6 +126,7 @@ export const UserProvider = ({ children }) => {
     };
 
     verifyToken();
+    //eslint-disable-next-line
   }, []);
 
   /**
