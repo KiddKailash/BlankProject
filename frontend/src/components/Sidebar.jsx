@@ -134,7 +134,7 @@ const Sidebar = () => {
         {/* Display logo text only when expanded */}
         {!collapsed && (
           <Typography variant="h6" fontWeight="bold" color="primary">
-            LearnABLE
+            Vellum
           </Typography>
         )}
       </Box>
