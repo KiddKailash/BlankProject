@@ -1,7 +1,6 @@
 import React from "react";
 import PageWrapper from "../../components/PageWrapper";
 
-
 // MUI
 import Typography from "@mui/material/Typography";
 
