@@ -9,7 +9,8 @@ const PageWrapper = ({ children }) => {
         flexDirection: "column",
         height: "100%",
         width: "100%",
-        m: 2,
+        m: 'auto',
+        p:2,
         background: theme.palette.background.paper,
         borderRadius: theme.shape.borderRadius,
       })}
