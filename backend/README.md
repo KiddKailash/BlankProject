@@ -1,6 +1,6 @@
 # 📁 Environment Setup
 
-You must create a `.env` file inside the `backend/` directory with the following structure:
+Create a `.env` file inside the `backend/` directory with the following structure:
 
 ```markdown
 # 🌐 Server Setup
