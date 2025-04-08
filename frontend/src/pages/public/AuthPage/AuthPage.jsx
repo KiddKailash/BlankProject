@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useMsal } from "@azure/msal-react";
 
@@ -19,104 +19,71 @@ import Link from "@mui/material/Link";
 import UserContext from "../../../services/UserContext";
 import { SnackbarContext } from "../../../contexts/SnackbarContext";
 
-/**
- * AuthPage Component
- *
- * This component renders an authentication page that supports both login and registration.
- * It enables OAuth login through Google and Microsoft, as well as normal email/password authentication.
- * It also provides UI feedback via the Snackbar alert system.
- *
- * The mode (login/register) is determined by the query parameter "mode".
- *
- * @component
- * @returns {JSX.Element} The authentication page component.
- */
 const AuthPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { instance } = useMsal(); // MSAL instance for Microsoft OAuth
+  const { instance } = useMsal();
 
-  // Retrieve global UI alert function
+  // Context hooks
   const { showSnackbar } = useContext(SnackbarContext);
+  const {
+    login,
+    registerUser,
+    loginWithGoogle,
+    loginWithMicrosoft,
+    isLoggedIn,
+    user,
+  } = useContext(UserContext);
 
-  // Retrieve authentication-related functions from UserContext
-  const { login, registerUser, loginWithGoogle, loginWithMicrosoft } =
-    useContext(UserContext);
+  // Redirect if user is already logged in
+  useEffect(() => {
+    if (isLoggedIn && user) {
+      navigate("/dashboard");
+    }
+  }, [isLoggedIn, user, navigate]);
 
-  // Determine current mode (login or register) based on URL query parameters
-  const mode = new URLSearchParams(location.search).get("mode");
-  const isLogin = mode === "login";
-
-  // Form state hooks for email, password, and name (registration only)
+  // Form state
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
 
-  /**
-   * toggleModeUrl
-   *
-   * Toggles the URL query parameter between "login" and "register".
-   */
+  // Determine login/register mode
+  const mode = new URLSearchParams(location.search).get("mode");
+  const isLogin = mode === "login";
+
   const toggleModeUrl = () => {
     const newMode = isLogin ? "register" : "login";
     navigate(`?mode=${newMode}`);
   };
 
-  /************************************************
-   * Google OAuth Handlers
-   ************************************************/
-
-  /**
-   * handleGoogleSuccess
-   *
-   * Callback for successful Google OAuth login. Processes the credential,
-   * attempts to log in via Google, shows a success or error snackbar, and navigates to the dashboard.
-   *
-   * @param {object} credentialResponse - Response from Google containing the JWT credential.
-   */
+  // OAuth handlers
   const handleGoogleSuccess = async (credentialResponse) => {
-    // Call the context function to perform Google login
     const result = await loginWithGoogle(credentialResponse.credential);
     if (result.success) {
-      showSnackbar("Google login successful!", "success");
+      showSnackbar("Successfully logged in with Google!", "success");
       navigate("/dashboard");
     } else {
-      showSnackbar(result.message, "error");
+      showSnackbar(result.message || "Failed to login with Google", "error");
     }
   };
 
-  /**
-   * handleGoogleError
-   *
-   * Callback for handling errors during Google OAuth login.
-   */
   const handleGoogleError = () => {
     showSnackbar("Google login failed", "error");
   };
 
-  /************************************************
-   * Microsoft OAuth Handler
-   ************************************************/
-
-  /**
-   * handleMicrosoftLogin
-   *
-   * Initiates Microsoft OAuth login using MSAL's popup method. After successful authentication,
-   * it sends the access token to the backend, displays appropriate snackbar messages,
-   * and navigates to the dashboard.
-   */
   const handleMicrosoftLogin = async () => {
     try {
-      // Open a popup for Microsoft sign in, requesting the "User.Read" scope.
       const response = await instance.loginPopup({ scopes: ["User.Read"] });
-      if (response && response.accessToken) {
-        // Send the obtained access token to the backend for authentication.
+      if (response?.accessToken) {
         const result = await loginWithMicrosoft(response.accessToken);
         if (result.success) {
-          showSnackbar("Microsoft login successful!", "success");
+          showSnackbar("Successfully logged in with Microsoft!", "success");
           navigate("/dashboard");
         } else {
-          showSnackbar(result.message, "error");
+          showSnackbar(
+            result.message || "Failed to login with Microsoft",
+            "error"
+          );
         }
       }
     } catch (error) {
@@ -124,18 +91,7 @@ const AuthPage = () => {
     }
   };
 
-  /************************************************
-   * Email/Password Authentication Handlers
-   ************************************************/
-
-  /**
-   * handleLogin
-   *
-   * Handles form submission for email/password login. Prevents default form submission,
-   * calls the login function from context, and navigates accordingly.
-   *
-   * @param {React.FormEvent} e - Form event object.
-   */
+  // Form handlers
   const handleLogin = async (e) => {
     e.preventDefault();
     const result = await login(email, password);
@@ -143,18 +99,10 @@ const AuthPage = () => {
       showSnackbar("Login successful!", "success");
       navigate("/dashboard");
     } else {
-      showSnackbar(result.message, "error");
+      showSnackbar(result.message || "Login failed", "error");
     }
   };
 
-  /**
-   * handleRegister
-   *
-   * Handles form submission for user registration with name, email, and password.
-   * Prevents default form behavior, calls the registration function, and navigates based on the result.
-   *
-   * @param {React.FormEvent} e - Form event object.
-   */
   const handleRegister = async (e) => {
     e.preventDefault();
     const result = await registerUser(name, email, password);
@@ -162,7 +110,7 @@ const AuthPage = () => {
       showSnackbar("Registration successful!", "success");
       navigate("/dashboard");
     } else {
-      showSnackbar(result.message, "error");
+      showSnackbar(result.message || "Registration failed", "error");
     }
   };
 
@@ -210,29 +158,19 @@ const AuthPage = () => {
             )}
           </Typography>
 
-          {/*
-            OAuth Buttons:
-            Passing handlers for Google & Microsoft OAuth login to AuthButtons,
-            which renders styled buttons with matching behavior.
-          */}
           <AuthButtons
             handleGoogleSuccess={handleGoogleSuccess}
             handleGoogleError={handleGoogleError}
             handleMicrosoftLogin={handleMicrosoftLogin}
+            msalInstance={instance}
           />
 
-          {/*
-            Divider separating OAuth buttons and email/password login
-          */}
           <Stack direction="row" alignItems="center" spacing={2}>
             <Divider sx={{ flex: 1 }} />
             <Typography variant="subtitle2">or</Typography>
             <Divider sx={{ flex: 1 }} />
           </Stack>
 
-          {/*
-            Registration specific field for user's name (only shown in register mode)
-          */}
           {!isLogin && (
             <TextField
               fullWidth
@@ -244,7 +182,6 @@ const AuthPage = () => {
             />
           )}
 
-          {/* Email input field */}
           <TextField
             fullWidth
             label="Email"
@@ -254,7 +191,6 @@ const AuthPage = () => {
             variant="outlined"
           />
 
-          {/* Password input field */}
           <TextField
             fullWidth
             label="Password"
@@ -264,8 +200,13 @@ const AuthPage = () => {
             variant="outlined"
           />
 
-          {/* Submit button */}
-          <Button fullWidth type="submit" variant="contained" color="primary">
+          <Button
+            fullWidth
+            type="submit"
+            variant="contained"
+            color="primary"
+            disabled={!email || !password || (!isLogin && !name)}
+          >
             {isLogin ? "Login" : "Register"}
           </Button>
         </Stack>

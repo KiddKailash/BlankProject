@@ -1,10 +1,14 @@
 import React from "react";
+import PageWrapper from "../../components/PageWrapper";
 
 // MUI
 import Typography from "@mui/material/Typography";
 
 const AIAssistant = () => {
-  return <Typography variant="h1">AIAssistant</Typography>;
-};
+  return (
+    <PageWrapper>
+      <Typography variant="h1">AI Assistant</Typography>
+    </PageWrapper>
+  );};
 
 export default AIAssistant;

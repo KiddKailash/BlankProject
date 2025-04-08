@@ -5,7 +5,6 @@
  *
  * @module App
  */
-
 import React, { useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 
@@ -62,35 +61,20 @@ function App() {
   // Any path not included in this list (and not the catch-all "*") will be considered protected.
   const publicPaths = ["/", "/auth"];
 
-  // Local state to store fetched data from the backend (if needed).
-  const [data, setData] = useState(null);
-
-  // Log the current state of data. This is optional and for debugging purposes.
-  data ? console.log("Fetched Data:", data) : console.log("Data not fetched");
-
   return (
-    // Define the routes for the application
     <Routes>
-      {/* Define the root route and render the Dashboard component.
-        The Dashboard component will render the appropriate page based on the current route. */}
       <Route path="/" element={<Layout />}>
         {pages.map((page, i) => {
           // Determine if the route is public.
-          // A route is considered public if its path is in publicPaths or if it's the catch-all "*".
           const isPublic = publicPaths.includes(page.path) || page.path === "*";
-
-          // For each page object, create a Route element.
-          // If the route is protected, wrap the component in ProtectRoute to enforce authentication.
           return (
             <Route
               key={i}
               path={page.path}
               element={
                 isPublic ? (
-                  // Render public component directly.
                   page.component
                 ) : (
-                  // Render protected component wrapped with ProtectRoute.
                   <ProtectRoute>{page.component}</ProtectRoute>
                 )
               }

@@ -3,60 +3,103 @@ import { useNavigate } from "react-router-dom";
 
 /**
  * @fileoverview Provides a UserContext which handles authentication logic
- * (login, register, Google auth, Microsoft auth) and stores the token/user data.
- *
- * This context verifies existing tokens on load, provides functions to log in
- * or register via email/password or OAuth (Google/Microsoft), and allows logging out.
- *
- * @module UserContext
+ * and user state management.
  */
 
-// Default context state values with stub async functions.
+// Default context state values
 const UserContext = createContext({
   isLoggedIn: false,
   authLoading: true,
+  user: null,
   login: async () => {},
   registerUser: async () => {},
   loginWithGoogle: async () => {},
   loginWithMicrosoft: async () => {},
   logout: () => {},
+  updateUserProfile: async () => {},
 });
 
-/**
- * UserProvider Component
- *
- * Provides the UserContext to its children and encapsulates all authentication logic.
- *
- * @param {object} props - Component properties.
- * @param {React.ReactNode} props.children - Child components that require access to user state.
- * @returns {JSX.Element} The context provider wrapper.
- */
 export const UserProvider = ({ children }) => {
-  // State to track if the user is logged in.
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  // State to track if authentication verification is in progress.
   const [authLoading, setAuthLoading] = useState(true);
-  const navigate = useNavigate();
+  const [user, setUser] = useState(null);
 
-  // Retrieve the backend URL from environment or fallback to localhost.
+  const navigate = useNavigate();
   const backendUrl = import.meta.env.VITE_SERVER_URI || "http://localhost:8080";
 
   /**
-   * Verify the stored token on initial load.
-   * If a token exists in localStorage, make a GET call to verify its validity.
-   * If valid, user is logged in; otherwise, remove the token.
+   * Verifies the JWT and retrieves a minimal user profile using the `/authorisation/verify` endpoint.
+   * This replaces the previous call to `/user/profile` which is not available.
+   */
+  const fetchUserProfile = async (token) => {
+    try {
+      const response = await fetch(`${backendUrl}/authorisation/verify`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Here we create a simple user object containing the userId.
+        setUser({ userId: data.userId });
+        return true;
+      }
+      setUser(null);
+      return false;
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+      setUser(null);
+      return false;
+    }
+  };
+
+  /**
+   * Updates the user's profile data.
+   * Note: This function still calls `/user/profile`—if you have an endpoint for profile updates,
+   * make sure it exists; otherwise, you might need to adjust this as well.
+   */
+  const updateUserProfile = async (profileData) => {
+    try {
+      const token = localStorage.getItem("access_token");
+      const response = await fetch(`${backendUrl}/user/profile`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(profileData),
+      });
+
+      if (response.ok) {
+        const updatedData = await response.json();
+        // Update the user state with any new profile information
+        setUser(updatedData);
+        return { success: true, data: updatedData };
+      }
+      const errorRes = await response.json();
+      return { success: false, message: errorRes.message };
+    } catch (error) {
+      console.error("Error updating user profile:", error);
+      return { success: false, message: "Failed to update profile" };
+    }
+  };
+
+  /**
+   * Verify token and fetch user data on initial load.
    */
   useEffect(() => {
     const verifyToken = async () => {
       const token = localStorage.getItem("access_token");
       if (!token) {
-        // No token found means user is not logged in.
         setAuthLoading(false);
         return;
       }
 
       try {
-        const response = await fetch(`${backendUrl}authorisation/verify`, {
+        const response = await fetch(`${backendUrl}/authorisation/verify`, {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -64,154 +107,129 @@ export const UserProvider = ({ children }) => {
         });
 
         if (response.ok) {
-          // Valid token, update login state.
           setIsLoggedIn(true);
+          // Use the same verification endpoint to get a minimal profile
+          await fetchUserProfile(token);
         } else {
-          // Invalid or expired token; clear from storage.
           localStorage.removeItem("access_token");
           setIsLoggedIn(false);
+          setUser(null);
         }
       } catch (error) {
         console.error("Error verifying token:", error);
-        // On error, assume token is invalid.
         localStorage.removeItem("access_token");
         setIsLoggedIn(false);
+        setUser(null);
       } finally {
         setAuthLoading(false);
       }
     };
 
     verifyToken();
-    // Do not add backendUrl to dependency array to avoid unintended loops.
-    // eslint-disable-next-line
+    //eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /************************************************
-   * Helper: Handle Server Authentication Response
-   ************************************************/
   /**
-   * Process the server's authentication response.
-   *
-   * @param {Response} response - The fetch response from the server.
-   * @returns {Promise<Object>} An object containing success flag and returned data or error message.
+   * Processes the authentication response from the server.
+   * Expects a response with an "access" property (the JWT token).
+   * It stores the token, updates the logged in state, fetches the user profile,
+   * and navigates to the dashboard.
    */
   const handleAuthResponse = async (response) => {
     const data = await response.json();
     if (response.ok) {
-      // Store the access token and update login state.
       localStorage.setItem("access_token", data.access);
       setIsLoggedIn(true);
+      await fetchUserProfile(data.access);
+      navigate("/dashboard");
       return { success: true, data };
-    } else {
-      return { success: false, message: data?.message || "Auth failed" };
     }
+    return {
+      success: false,
+      message: data?.message || "Authentication failed",
+    };
   };
 
-  /************************************************
-   * EMAIL/PASSWORD LOGIN Handler
-   ************************************************/
   /**
-   * Log in the user using email and password.
-   *
-   * @param {string} email - User's email address.
-   * @param {string} password - User's password.
-   * @returns {Promise<Object>} The result of the authentication attempt.
+   * Email/Password Login.
    */
   const login = async (email, password) => {
     try {
-      const response = await fetch(`${backendUrl}authorisation/login`, {
+      const response = await fetch(`${backendUrl}/authorisation/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
-      return handleAuthResponse(response);
+      return await handleAuthResponse(response);
     } catch (error) {
       console.error("Login error:", error);
       return { success: false, message: "Server error" };
     }
   };
 
-  /************************************************
-   * EMAIL/PASSWORD REGISTER Handler
-   ************************************************/
   /**
-   * Register a new user with name, email, and password.
-   *
-   * @param {string} name - User's full name.
-   * @param {string} email - User's email address.
-   * @param {string} password - User's password.
-   * @returns {Promise<Object>} The result of the registration attempt.
+   * User Registration.
    */
   const registerUser = async (name, email, password) => {
     try {
-      const response = await fetch(`${backendUrl}authorisation/register`, {
+      const response = await fetch(`${backendUrl}/authorisation/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, password }),
       });
-      return handleAuthResponse(response);
+      return await handleAuthResponse(response);
     } catch (error) {
       console.error("Register error:", error);
       return { success: false, message: "Server error" };
     }
   };
 
-  /************************************************
-   * GOOGLE OAUTH LOGIN Handler
-   ************************************************/
   /**
-   * Log in using Google OAuth token.
-   *
-   * @param {string} googleToken - The JWT token obtained from Google.
-   * @returns {Promise<Object>} The result of the Google authentication attempt.
+   * Google OAuth Login.
    */
   const loginWithGoogle = async (googleToken) => {
     try {
-      const response = await fetch(`${backendUrl}authorisation/google-auth`, {
+      const response = await fetch(`${backendUrl}/authorisation/google-auth`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token: googleToken }),
+        credentials: "include", // For cookie handling if required.
       });
-      return handleAuthResponse(response);
+      return await handleAuthResponse(response);
     } catch (error) {
       console.error("Google login error:", error);
       return { success: false, message: "Server error" };
     }
   };
 
-  /************************************************
-   * MICROSOFT OAUTH LOGIN Handler
-   ************************************************/
   /**
-   * Log in using Microsoft OAuth token.
-   *
-   * @param {string} msToken - The token obtained from Microsoft authentication.
-   * @returns {Promise<Object>} The result of the Microsoft authentication attempt.
+   * Microsoft OAuth Login.
    */
   const loginWithMicrosoft = async (msToken) => {
     try {
-      const response = await fetch(`${backendUrl}authorisation/microsoft-auth`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token: msToken }),
-      });
-      return handleAuthResponse(response);
+      const response = await fetch(
+        `${backendUrl}/authorisation/microsoft-auth`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token: msToken }),
+          credentials: "include",
+        }
+      );
+      return await handleAuthResponse(response);
     } catch (error) {
       console.error("Microsoft login error:", error);
       return { success: false, message: "Server error" };
     }
   };
 
-  /************************************************
-   * LOGOUT Handler
-   ************************************************/
   /**
-   * Logs the user out by removing the stored access token, updating the login state,
-   * and redirecting to the login page.
+   * Logout.
    */
   const logout = () => {
     localStorage.removeItem("access_token");
     setIsLoggedIn(false);
+    setUser(null);
     navigate("/auth?mode=login");
   };
 
@@ -220,11 +238,13 @@ export const UserProvider = ({ children }) => {
       value={{
         isLoggedIn,
         authLoading,
+        user,
         login,
         registerUser,
         loginWithGoogle,
         loginWithMicrosoft,
         logout,
+        updateUserProfile,
       }}
     >
       {children}

@@ -52,7 +52,7 @@ const navItems = [
   { text: "Attendance", icon: <EventAvailableIcon /> },
   { text: "Analytics", icon: <BarChartIcon /> },
   { text: "Message", icon: <MessageIcon /> },
-  { text: "AI Assistant", icon: <SmartToyIcon />, highlight: true },
+  { text: "AI Assistant", icon: <SmartToyIcon /> },
 ];
 
 // Navigation items for settings section of the sidebar
@@ -94,7 +94,7 @@ const Sidebar = () => {
     location.pathname === `/${path.toLowerCase().replace(" ", "-")}`;
 
   // Compute dynamic sidebar width based on collapsed state.
-  const SIDEBAR_WIDTH = collapsed ? 72 : 240;
+  const SIDEBAR_WIDTH = collapsed ? 72 : 200;
 
   const handleLogout = async () => {
     await logout();
@@ -134,14 +134,14 @@ const Sidebar = () => {
         {/* Display logo text only when expanded */}
         {!collapsed && (
           <Typography variant="h6" fontWeight="bold" color="primary">
-            LearnABLE
+            Vellum
           </Typography>
         )}
       </Box>
 
       {/* Navigation list */}
       <List sx={{ flexGrow: 1 }}>
-        {navItems.map(({ text, icon, highlight }) => {
+        {navItems.map(({ text, icon }) => {
           const path = `/${text.toLowerCase().replace(" ", "-")}`;
           const selected = isActive(text);
           return (
@@ -158,19 +158,12 @@ const Sidebar = () => {
                 sx={{
                   mb: 1,
                   borderRadius: 2,
-                  // Highlight styling for designated items (e.g., AI Assistant)
-                  bgcolor: highlight && !collapsed ? "#3D5CFF" : "transparent",
-                  color: highlight && !collapsed ? "#fff" : "inherit",
-                  "&:hover": {
-                    bgcolor:
-                      highlight && !collapsed ? "#2f47cc" : "action.hover",
-                  },
                   justifyContent: collapsed ? "center" : "flex-start",
                 }}
               >
                 <ListItemIcon
                   sx={{
-                    color: highlight && !collapsed ? "#fff" : "inherit",
+                    color: "primary.main",
                     minWidth: collapsed ? "auto" : "40px",
                   }}
                 >
